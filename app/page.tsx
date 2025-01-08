@@ -1,48 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-
-interface VideoData {
-  title: string;
-  views: number;
-  thumbnail: string;
-}
-
-interface GraphData {
-  name: string;
-  views: number;
-}
+import { VideoData, GraphData, Analytics } from "@/types";
+import { PlaylistForm } from "@/components/playlist/PlaylistForm";
+import { VideoList } from "@/components/playlist/VideoList";
+import { ChartTabs } from "@/components/common/ChartsTab";
+import { KeyMetricsCard } from "@/components/analytics/KeyMetricsCard";
+import { TopVideosCard } from "@/components/analytics/TopVideosCard";
+import { ViewsDistributionCard } from "@/components/analytics/ViewDistributionCard";
+import { PerformanceMetricsCard } from "@/components/analytics/PerformanceMetricsCard";
+import { calculateAnalytics } from "@/utils/analytics";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export default function Home() {
   const [playlistUrl, setPlaylistUrl] = useState("");
   const [videoData, setVideoData] = useState<VideoData[]>([]);
   const [graphData, setGraphData] = useState<GraphData[]>([]);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
 
     try {
+      // Validate URL
+      if (!playlistUrl.includes("youtube.com/playlist")) {
+        throw new Error("Please enter a valid YouTube playlist URL");
+      }
+
       const response = await fetch("/api/scrape-playlist", {
         method: "POST",
         headers: {
@@ -52,108 +41,116 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch playlist data");
+        throw new Error(
+          `Failed to fetch playlist data: ${response.statusText}`
+        );
       }
 
       const data = await response.json();
+
+      if (!data.videoList || data.videoList.length === 0) {
+        throw new Error("No videos found in this playlist");
+      }
+
       setVideoData(data.videoList);
       setGraphData(data.graphData);
-    } catch (error) {
-      console.error("Error:", error);
+      setAnalytics(calculateAnalytics(data.videoList));
+      setError(null);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      );
+      console.error("Error:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const formatViews = (views: number) => {
-    if (views >= 1000000) {
-      return `${(views / 1000000).toFixed(1)}M`;
-    } else if (views >= 1000) {
-      return `${(views / 1000).toFixed(1)}K`;
-    } else {
-      return views.toString();
-    }
-  };
-
   return (
-    <div className="container mx-auto p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>YouTube Playlist Analyzer</CardTitle>
-          <CardDescription>
-            Enter a YouTube playlist URL to analyze its videos
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              type="url"
-              placeholder="Enter YouTube playlist URL"
-              value={playlistUrl}
-              onChange={(e) => setPlaylistUrl(e.target.value)}
-              required
-            />
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Analyzing..." : "Analyze Playlist"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <main className="min-h-screen bg-gray-50">
+      <div className="container mx-auto p-4 space-y-8">
+        {/* Header Section */}
+        <PlaylistForm
+          playlistUrl={playlistUrl}
+          setPlaylistUrl={setPlaylistUrl}
+          onSubmit={handleSubmit}
+          isLoading={isLoading}
+        />
 
-      {videoData.length > 0 && (
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Video List</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-4">
-                {videoData.map((video, index) => (
-                  <li key={index} className="flex items-start space-x-4">
-                    <span className="font-bold text-lg min-w-[24px]">
-                      {index + 1}.
-                    </span>
-                    <img
-                      src={video.thumbnail}
-                      alt={video.title}
-                      className="w-24 h-auto"
-                    />
-                    <div>
-                      <h3 className="font-semibold">{video.title}</h3>
-                      <p className="text-sm text-gray-600">
-                        {formatViews(video.views)} views
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+        {/* Error Alert */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle>View Count Graph</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={graphData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="views"
-                    stroke="#8884d8"
-                    activeDot={{ r: 8 }}
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <span className="ml-2 text-lg text-gray-600">
+              Analyzing playlist...
+            </span>
+          </div>
+        )}
+
+        {/* Results Section */}
+        {videoData.length > 0 && !isLoading && (
+          <>
+            {/* Charts and Video List */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <VideoList videos={videoData} />
+              <ChartTabs graphData={graphData} />
+            </div>
+
+            {/* Analytics Section */}
+            {analytics && (
+              <div className="space-y-8">
+                {/* Key Metrics Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <KeyMetricsCard
+                    totalViews={analytics.totalViews}
+                    averageViews={analytics.averageViews}
+                    maxViews={analytics.maxViews}
                   />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
+                  <div className="md:col-span-2">
+                    <TopVideosCard videos={analytics.topVideos} />
+                  </div>
+                </div>
+
+                {/* Performance Metrics Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <ViewsDistributionCard
+                    distribution={analytics.viewsDistribution}
+                  />
+                  <div className="md:col-span-2">
+                    <PerformanceMetricsCard
+                      metrics={analytics.performanceMetrics}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !error && videoData.length === 0 && (
+          <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No Playlist Data
+              </h3>
+              <p className="text-gray-500">
+                Enter a YouTube playlist URL above to start analyzing your
+                videos.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }

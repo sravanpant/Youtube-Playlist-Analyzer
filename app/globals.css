@@ -2,9 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --font-geist-sans: "Geist Sans";
+    --font-geist-mono: "Geist Mono";
+  }
+
+  html {
+    font-family: var(--font-geist-sans), system-ui, sans-serif;
+  }
+}
+
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  /* --background: #0a0a0a; */
+  /* --foreground: #ededed; */
 }
 
 body {
