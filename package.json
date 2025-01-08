@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npx playwright install && next build",
+    "dev": "next build",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "docker:build": "docker build -t my-playwright-app .",
+    "docker:run": "docker run -p 3000:3000 my-playwright-app"
   },
   "dependencies": {
     "@radix-ui/react-icons": "^1.3.0",
