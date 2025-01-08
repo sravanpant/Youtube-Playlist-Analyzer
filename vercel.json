@@ -1,9 +1,4 @@
 {
-  "builds": [
-    {
-      "src": "Dockerfile",
-      "use": "@vercel/docker"
-    }
-  ],
-  "buildCommand": "./build.sh"
+  "buildCommand": "npx playwright install --with-deps && next build",
+  "installCommand": "npm install"
 }
