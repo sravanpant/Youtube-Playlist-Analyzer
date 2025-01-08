@@ -1,9 +1,0 @@
-{
-	"id": "GVI980x86JMdody",
-	"json": "{\"id\":\"GVI980x86JMdody\",\"url\":\"https://www.youtube.com/playlist?list=PLu71SKxNbfoBuX3f4EOACle2y-tRC5Q37\",\"loadedUrl\":\"https://www.youtube.com/playlist?list=PLu71SKxNbfoBuX3f4EOACle2y-tRC5Q37\",\"uniqueKey\":\"https://www.youtube.com/playlist?list=PLu71SKxNbfoBuX3f4EOACle2y-tRC5Q37:29649fa8-5949-4f40-b8c1-5830ca94748d\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"__crawlee\":{\"state\":4}},\"handledAt\":\"2025-01-08T09:47:08.695Z\"}",
-	"method": "GET",
-	"orderNo": null,
-	"retryCount": 0,
-	"uniqueKey": "https://www.youtube.com/playlist?list=PLu71SKxNbfoBuX3f4EOACle2y-tRC5Q37:29649fa8-5949-4f40-b8c1-5830ca94748d",
-	"url": "https://www.youtube.com/playlist?list=PLu71SKxNbfoBuX3f4EOACle2y-tRC5Q37"
-}
